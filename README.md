@@ -27,8 +27,6 @@ If you found a bug, please file it at https://crbug.com/new.
 
 To install the Enhanced Chromium Browser, follow these steps:
 ```
-
-
 1. Clone the repository:
    ```sh
    git clone https://github.com/SweetZedd/Chromium-Browser.git
