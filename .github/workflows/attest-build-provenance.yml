@@ -1,0 +1,115 @@
+# `actions/attest-build-provenance`
+
+[![Public-Good Sigstore Prober](https://github.com/actions/attest-build-provenance/actions/workflows/prober-public-good.yml/badge.svg)](https://github.com/actions/attest-build-provenance/actions/workflows/prober-public-good.yml)
+[![GitHub Sigstore Prober](https://github.com/actions/attest-build-provenance/actions/workflows/prober-github.yml/badge.svg)](https://github.com/actions/attest-build-provenance/actions/workflows/prober-github.yml)
+
+Generate signed build provenance attestations for workflow artifacts. Internally
+powered by the [@actions/attest][1] package.
+
+Attestations bind some subject (a named artifact along with its digest) to a
+[SLSA build provenance][3] predicate using the [in-toto][2] format.
+
+A verifiable signature is generated for the attestation using a short-lived
+[Sigstore][4]-issued signing certificate. If the repository initiating the
+GitHub Actions workflow is public, the public-good instance of Sigstore will be
+used to generate the attestation signature. If the repository is
+private/internal, it will use the GitHub private Sigstore instance.
+
+Once the attestation has been created and signed, it will be uploaded to the GH
+attestations API and associated with the repository from which the workflow was
+initiated.
+
+Attestations can be verified using the [`attestation` command in the GitHub
+CLI][5].
+
+See [Using artifact attestations to establish provenance for builds][9] for more
+information on artifact attestations.
+
+<!-- prettier-ignore-start -->
+> [!NOTE]
+> Artifact attestations are available in public repositories for all
+> current GitHub plans. They are not available on legacy plans, such as Bronze,
+> Silver, or Gold. If you are on a GitHub Free, GitHub Pro, or GitHub Team plan,
+> artifact attestations are only available for public repositories. To use
+> artifact attestations in private or internal repositories, you must be on a
+> GitHub Enterprise Cloud plan.
+<!-- prettier-ignore-end -->
+
+## Usage
+
+Within the GitHub Actions workflow which builds some artifact you would like to
+attest:
+
+1. Ensure that the following permissions are set:
+
+   ```yaml
+   permissions:
+     id-token: write
+     attestations: write
+   ```
+
+   The `id-token` permission gives the action the ability to mint the OIDC token
+   necessary to request a Sigstore signing certificate. The `attestations`
+   permission is necessary to persist the attestation.
+
+1. Add the following to your workflow after your artifact has been built:
+
+   ```yaml
+   - uses: actions/attest-build-provenance@v2
+     with:
+       subject-path: '<PATH TO ARTIFACT>'
+   ```
+
+   The `subject-path` parameter should identify the artifact for which you want
+   to generate an attestation.
+
+### Inputs
+
+See [action.yml](action.yml)
+
+```yaml
+- uses: actions/attest-build-provenance@v2
+  with:
+    # Path to the artifact serving as the subject of the attestation. Must
+    # specify exactly one of "subject-path", "subject-digest", or
+    # "subject-checksums". May contain a glob pattern or list of paths
+    # (total subject count cannot exceed 1024).
+    subject-path:
+
+    # SHA256 digest of the subject for the attestation. Must be in the form
+    # "sha256:hex_digest" (e.g. "sha256:abc123..."). Must specify exactly one
+    # of "subject-path", "subject-digest", or "subject-checksums".
+    subject-digest:
+
+    # Subject name as it should appear in the attestation. Required when
+    # identifying the subject with the "subject-digest" input.
+    subject-name:
+
+    # Path to checksums file containing digest and name of subjects for
+    # attestation. Must specify exactly one of "subject-path", "subject-digest",
+    # or "subject-checksums".
+    subject-checksums:
+
+    # Whether to push the attestation to the image registry. Requires that the
+    # "subject-name" parameter specify the fully-qualified image name and that
+    # the "subject-digest" parameter be specified. Defaults to false.
+    push-to-registry:
+
+    # Whether to attach a list of generated attestations to the workflow run
+    # summary page. Defaults to true.
+    show-summary:
+
+    # The GitHub token used to make authenticated API requests. Default is
+    # ${{ github.token }}
+    github-token:
+```
+
+### Outputs
+
+<!-- markdownlint-disable MD013 -->
+
+| Name              | Description                                                    | Example                                          |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| `attestation-id`  | GitHub ID for the attestation                                  | `123456`                                         |
+| `attestation-url` | URL for the attestation summary                                | `https://github.com/foo/bar/attestations/123456` |
+| `bundle-path`     | Absolute path to the file containing the generated attestation | `/tmp/attestation.json`                          |
