@@ -1,0 +1,67 @@
+/* Global Styles */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Navbar Customization */
+.navbar-brand i {
+    margin-right: 8px;
+}
+
+/* Alert Customization */
+.alert i {
+    margin-right: 8px;
+}
+
+/* Card Customization */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.extension-card {
+    transition: transform 0.2s;
+    margin-bottom: 20px;
+}
+
+.extension-card:hover {
+    transform: translateY(-5px);
+}
+
+.extension-card .card-img-top {
+    height: 150px;
+    object-fit: cover;
+    background-color: #f1f3f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.extension-card .card-img-top i {
+    font-size: 48px;
+    color: #6c757d;
+}
+
+/* Category List Customization */
+.list-group-item {
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.list-group-item:hover {
+    background-color: #e9ecef;
+}
+
+/* Search Input Customization */
+.input-group {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Utility Classes */
+.mt-4 {
+    margin-top: 2rem;
+}
+
+.mb-4 {
+    margin-bottom: 2rem;
+}
