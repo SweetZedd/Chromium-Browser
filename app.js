@@ -61,7 +61,7 @@ function createExtensionCard(extension) {
     col.className = 'col-md-6';
 
     col.innerHTML = `
-        <div class="card extension-card">
+        <div class="card extension-card" data-category="${extension.category?.name || ''}">
             <div class="card-img-top p-4">
                 <i data-feather="${extension.icon}"></i>
             </div>
@@ -90,7 +90,37 @@ function createExtensionCard(extension) {
 
 // Handle extension installation
 function handleInstall(extensionId) {
-    alert('Please note: Direct extension installation requires proper authorization. Please visit the official Chrome Web Store to install this extension.');
+    // Get the extension details
+    fetch(`/api/extensions/${extensionId}`)
+        .then(response => response.json())
+        .then(extension => {
+            const isWalletExtension = extension.categoryId === getWalletCategoryId();
+            const message = isWalletExtension
+                ? `IMPORTANT: For wallet extensions, always verify you're installing from the official Chrome Web Store. ` +
+                  `Never share your recovery phrase or private keys.\n\n` +
+                  `Please visit the official Chrome Web Store to install ${extension.name}.`
+                : `Please note: Direct extension installation requires proper authorization. ` +
+                  `Please visit the official Chrome Web Store to install this extension.`;
+
+            alert(message);
+        })
+        .catch(error => {
+            console.error('Error fetching extension details:', error);
+            alert('Please visit the official Chrome Web Store to install this extension.');
+        });
+}
+
+// Helper function to get wallet category ID
+async function getWalletCategoryId() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        const walletCategory = categories.find(cat => cat.name === 'Wallet');
+        return walletCategory ? walletCategory.id : null;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        return null;
+    }
 }
 
 // Show error message
