@@ -88,32 +88,68 @@ body {
     font-size: 20px;
 }
 
-/* Modal Styling */
-.modal {
-    background-color: rgba(0, 0, 0, 0.5);
+/* Picture-in-Picture Modal Styling */
+.modal.pip {
+    background-color: transparent;
+    pointer-events: none;
 }
 
-.modal-dialog {
-    max-width: 500px;
+.modal.pip .modal-dialog {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    margin: 0;
+    width: 350px;
+    pointer-events: all;
+    transition: all 0.3s ease;
 }
 
-.modal-content {
+.modal.pip .modal-content {
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.modal-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 1.5rem;
+.modal.pip .modal-header {
+    padding: 0.75rem 1rem;
+    cursor: move;
+    background-color: #f8f9fa;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
 }
 
-.modal-body {
-    padding: 1.5rem;
+.modal.pip .modal-body {
+    padding: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
-.modal-footer {
-    border-top: 1px solid #e9ecef;
-    padding: 1rem 1.5rem;
+.modal.pip .modal-footer {
+    padding: 0.75rem 1rem;
+}
+
+.modal.pip .extension-icon {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal.pip .extension-details .description {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.modal.pip .extension-details .stats {
+    font-size: 0.875rem;
+}
+
+/* No backdrop for PiP */
+.modal.pip .modal-backdrop {
+    display: none;
+}
+
+body.modal-open {
+    overflow: auto;
+    padding-right: 0;
 }
 
 .extension-icon {
@@ -137,27 +173,4 @@ body {
 .extension-details .stats i {
     margin-right: 0.5rem;
     vertical-align: middle;
-}
-
-/* Modal backdrop */
-.modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-body.modal-open {
-    overflow: hidden;
-    padding-right: 15px; /* Compensate for scrollbar removal */
-}
-
-/* Wallet Extension Modal Styling */
-.modal-content .alert-warning {
-    border-left: 4px solid #ffc107;
-    background-color: #fff8e1;
-    margin-bottom: 1.5rem;
-}
-
-.modal-content .alert-warning i {
-    margin-right: 0.5rem;
-    vertical-align: middle;
-    color: #ffc107;
 }

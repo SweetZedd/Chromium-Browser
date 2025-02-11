@@ -94,7 +94,7 @@ function createExtensionCard(extension) {
     return col;
 }
 
-// Show extension details in modal
+// Show extension details in PiP window
 function showExtensionDetails(extension) {
     // Remove existing modal if any
     const existingModal = document.getElementById('extensionModal');
@@ -104,7 +104,7 @@ function showExtensionDetails(extension) {
 
     const modal = document.createElement('div');
     modal.id = 'extensionModal';
-    modal.className = 'modal fade show';
+    modal.className = 'modal pip fade show';
     modal.style.display = 'block';
     modal.setAttribute('tabindex', '-1');
 
@@ -113,25 +113,25 @@ function showExtensionDetails(extension) {
         ? `<div class="alert alert-warning">
             <i data-feather="shield"></i>
             <strong>Security Notice:</strong> This is a cryptocurrency wallet extension. 
-            Always verify you're installing from the official Chrome Web Store and never share your recovery phrase or private keys.
+            Always verify you're installing from the official Chrome Web Store.
            </div>`
         : '';
 
     modal.innerHTML = `
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header" id="modalHeader">
                     <h5 class="modal-title">${extension.name}</h5>
                     <button type="button" class="btn-close" onclick="closeModal()"></button>
                 </div>
                 <div class="modal-body">
                     ${securityNote}
-                    <div class="extension-icon mb-3">
-                        <i data-feather="${extension.icon}" style="width: 48px; height: 48px;"></i>
+                    <div class="extension-icon">
+                        <i data-feather="${extension.icon}" style="width: 32px; height: 32px;"></i>
                     </div>
                     <div class="extension-details">
                         <p class="description">${extension.description}</p>
-                        <div class="stats d-flex gap-4 mb-3">
+                        <div class="stats d-flex gap-3 mb-2">
                             <div class="rating">
                                 <i data-feather="star" class="text-warning"></i>
                                 <span>${extension.rating} rating</span>
@@ -141,26 +141,71 @@ function showExtensionDetails(extension) {
                                 <span>${extension.users} users</span>
                             </div>
                         </div>
-                        <div class="category mb-3">
+                        <div class="category">
                             <strong>Category:</strong> ${extension.category?.name || 'Uncategorized'}
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="handleInstall(${extension.id})">
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="handleInstall(${extension.id})">
                         <i data-feather="download"></i>
-                        Install Extension
+                        Install
                     </button>
                 </div>
             </div>
         </div>
-        <div class="modal-backdrop fade show"></div>
     `;
 
     document.body.appendChild(modal);
-    document.body.classList.add('modal-open');
     feather.replace();
+
+    // Add drag functionality
+    const modalDialog = modal.querySelector('.modal-dialog');
+    const modalHeader = modal.querySelector('#modalHeader');
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    modalHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    function dragStart(e) {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+
+        if (e.target === modalHeader) {
+            isDragging = true;
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, modalDialog);
+        }
+    }
+
+    function dragEnd() {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    }
+
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
 }
 
 // Close modal
