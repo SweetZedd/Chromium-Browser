@@ -7,8 +7,12 @@ const app = express();
 const router = express.Router();
 const port = parseInt(process.env.PORT || '3000', 10);
 
-// Serve static files
-app.use(express.static(join(__dirname, '..')));
+// Serve static files with cache headers
+app.use(express.static(join(__dirname, '..'), {
+    maxAge: '1h',
+    etag: true,
+    lastModified: true
+}));
 
 // Error handler middleware
 const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
@@ -16,17 +20,33 @@ const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunct
     res.status(500).json({ error: 'Internal server error' });
 };
 
-// API endpoints
-router.get('/extensions', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+// Cache middleware
+const cacheMiddleware = (duration: number) => {
+    return (_req: Request, res: Response, next: NextFunction) => {
+        res.setHeader('Cache-Control', `public, max-age=${duration}`);
+        next();
+    };
+};
+
+// API endpoints with pagination support
+interface PaginationQuery {
+    page?: string;
+    limit?: string;
+}
+
+router.get('/extensions', async (req: Request<{}, any, any, PaginationQuery>, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const extensions = await storage.getExtensions();
+        const page = parseInt(req.query.page || '0', 10);
+        const limit = Math.min(parseInt(req.query.limit || '10', 10), 50); // Max 50 items per page
+
+        const extensions = await storage.getExtensionsWithPagination(page, limit);
         res.json(extensions);
     } catch (error) {
         next(error);
     }
 });
 
-router.get('/categories', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/categories', cacheMiddleware(3600), async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const categories = await storage.getCategories();
         res.json(categories);
@@ -39,14 +59,18 @@ interface CategoryParams {
     categoryId: string;
 }
 
-router.get('/categories/:categoryId/extensions', async (req: Request<CategoryParams>, res: Response, next: NextFunction): Promise<void> => {
+router.get('/categories/:categoryId/extensions', async (req: Request<CategoryParams, any, any, PaginationQuery>, res: Response, next: NextFunction): Promise<void> => {
     try {
         const categoryId = parseInt(req.params.categoryId);
+        const page = parseInt(req.query.page || '0', 10);
+        const limit = Math.min(parseInt(req.query.limit || '10', 10), 50);
+
         if (isNaN(categoryId)) {
             res.status(400).json({ error: 'Invalid category ID' });
             return;
         }
-        const extensions = await storage.getExtensionsByCategory(categoryId);
+
+        const extensions = await storage.getExtensionsByCategoryWithPagination(categoryId, page, limit);
         res.json(extensions);
     } catch (error) {
         next(error);
@@ -71,8 +95,8 @@ router.get('/extensions/search', async (req: Request<{}, any, any, SearchQuery>,
     }
 });
 
-// Add new endpoint for extension manifests
-router.get('/extensions/:id/manifest', async (req: Request<{id: string}>, res: Response, next: NextFunction): Promise<void> => {
+// Manifest endpoint with caching
+router.get('/extensions/:id/manifest', cacheMiddleware(3600), async (req: Request<{id: string}>, res: Response, next: NextFunction): Promise<void> => {
     try {
         const extensionId = parseInt(req.params.id);
         if (isNaN(extensionId)) {
@@ -86,8 +110,6 @@ router.get('/extensions/:id/manifest', async (req: Request<{id: string}>, res: R
             return;
         }
 
-        // In a real implementation, this would fetch the actual manifest from the extension
-        // For demo purposes, we'll create a sample manifest
         const sampleManifest = {
             manifest_version: 8,
             name: extension.name,
@@ -105,7 +127,6 @@ router.get('/extensions/:id/manifest', async (req: Request<{id: string}>, res: R
             }
         };
 
-        // Validate manifest using our handler
         const validatedManifest = await ManifestHandler.parseManifest(sampleManifest);
         const securitySummary = ManifestHandler.getSecuritySummary(validatedManifest);
 
