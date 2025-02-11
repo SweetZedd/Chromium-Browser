@@ -75,10 +75,16 @@ function createExtensionCard(extension) {
                     </div>
                     <small class="text-muted">${extension.users} users</small>
                 </div>
-                <button class="btn btn-primary mt-3 w-100" onclick="handleInstall(${extension.id})">
-                    <i data-feather="download"></i>
-                    Install Extension
-                </button>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-primary flex-grow-1" onclick="handleInstall(${extension.id})">
+                        <i data-feather="download"></i>
+                        Install
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="showExtensionDetails(${JSON.stringify(extension).replace(/"/g, '&quot;')})">
+                        <i data-feather="info"></i>
+                        Details
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -86,6 +92,84 @@ function createExtensionCard(extension) {
     // Re-initialize Feather icons for the new content
     feather.replace();
     return col;
+}
+
+// Show extension details in modal
+function showExtensionDetails(extension) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('extensionModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'extensionModal';
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.setAttribute('tabindex', '-1');
+
+    const isWallet = extension.category?.name === 'Wallet';
+    const securityNote = isWallet
+        ? `<div class="alert alert-warning">
+            <i data-feather="shield"></i>
+            <strong>Security Notice:</strong> This is a cryptocurrency wallet extension. 
+            Always verify you're installing from the official Chrome Web Store and never share your recovery phrase or private keys.
+           </div>`
+        : '';
+
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${extension.name}</h5>
+                    <button type="button" class="btn-close" onclick="closeModal()"></button>
+                </div>
+                <div class="modal-body">
+                    ${securityNote}
+                    <div class="extension-icon mb-3">
+                        <i data-feather="${extension.icon}" style="width: 48px; height: 48px;"></i>
+                    </div>
+                    <div class="extension-details">
+                        <p class="description">${extension.description}</p>
+                        <div class="stats d-flex gap-4 mb-3">
+                            <div class="rating">
+                                <i data-feather="star" class="text-warning"></i>
+                                <span>${extension.rating} rating</span>
+                            </div>
+                            <div class="users">
+                                <i data-feather="users"></i>
+                                <span>${extension.users} users</span>
+                            </div>
+                        </div>
+                        <div class="category mb-3">
+                            <strong>Category:</strong> ${extension.category?.name || 'Uncategorized'}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="handleInstall(${extension.id})">
+                        <i data-feather="download"></i>
+                        Install Extension
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    feather.replace();
+}
+
+// Close modal
+function closeModal() {
+    const modal = document.getElementById('extensionModal');
+    if (modal) {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    }
 }
 
 // Handle extension installation

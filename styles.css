@@ -87,3 +87,77 @@ body {
     right: 10px;
     font-size: 20px;
 }
+
+/* Modal Styling */
+.modal {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+    max-width: 500px;
+}
+
+.modal-content {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.extension-icon {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.extension-details .description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+.extension-details .stats {
+    color: #6c757d;
+}
+
+.extension-details .stats i {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 15px; /* Compensate for scrollbar removal */
+}
+
+/* Wallet Extension Modal Styling */
+.modal-content .alert-warning {
+    border-left: 4px solid #ffc107;
+    background-color: #fff8e1;
+    margin-bottom: 1.5rem;
+}
+
+.modal-content .alert-warning i {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    color: #ffc107;
+}
