@@ -24,26 +24,25 @@ If you found a bug, please file it at https://crbug.com/new.
 - Integration with modern web technologies
 
 ## Installation
-
 To install the Enhanced Chromium Browser, follow these steps:
-```
+``
 1. Clone the repository:
    ```sh
    git clone https://github.com/SweetZedd/Chromium-Browser.git
    ```
-3. Navigate to the project directory:
+2. Navigate to the project directory:
    ```sh
    cd Chromium-Browser
    ```
-4. Install the dependencies:
+3. Install the dependencies:
    ```sh
    npm install
    ```
-5. Build the project:
+4. Build the project:
    ```sh
    npm run build
    ```
-6. Run the application:
+5. Run the application:
    ```sh
    npm start
    ```
