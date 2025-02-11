@@ -313,7 +313,7 @@ document.getElementById('searchInput').addEventListener('keypress', (e) => {
 
 
 // Launch extension app in PiP mode
-function launchExtensionApp(extension) {
+async function launchExtensionApp(extension) {
     const pipId = `extension-app-${extension.id}`;
 
     // Remove existing PiP if any
@@ -322,44 +322,75 @@ function launchExtensionApp(extension) {
         existingPip.remove();
     }
 
-    const pip = document.createElement('div');
-    pip.id = pipId;
-    pip.className = 'modal pip app-pip fade show';
-    pip.style.display = 'block';
+    try {
+        // Fetch extension manifest
+        const manifestResponse = await fetch(`/api/extensions/${extension.id}/manifest`);
+        const manifest = await manifestResponse.json();
 
-    pip.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" id="${pipId}-header">
-                    <div class="d-flex align-items-center">
-                        <i data-feather="${extension.icon}" class="me-2"></i>
-                        <h5 class="modal-title">${extension.name}</h5>
+        // Create security summary section based on manifest permissions
+        const securitySummary = manifest.criticalPermissions?.length || manifest.hostPermissions?.length
+            ? `<div class="alert alert-info">
+                ${manifest.criticalPermissions?.length ? `
+                    <div class="mb-2">
+                        <strong>Permissions:</strong> ${manifest.criticalPermissions.join(', ')}
                     </div>
-                    <div class="pip-controls">
-                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="minimizeExtensionApp('${pipId}')">
-                            <i data-feather="minus"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="closeExtensionApp('${pipId}')">
-                            <i data-feather="x"></i>
-                        </button>
+                ` : ''}
+                ${manifest.hostPermissions?.length ? `
+                    <div>
+                        <strong>Host Access:</strong> ${manifest.hostPermissions.join(', ')}
                     </div>
-                </div>
-                <div class="modal-body app-container">
-                    <iframe 
-                        src="about:blank"
-                        class="extension-frame"
-                        sandbox="allow-scripts allow-same-origin"
-                        loading="lazy">
-                    </iframe>
+                ` : ''}
+               </div>`
+            : '';
+
+        const pip = document.createElement('div');
+        pip.id = pipId;
+        pip.className = 'modal pip app-pip fade show';
+        pip.style.display = 'block';
+
+        pip.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" id="${pipId}-header">
+                        <div class="d-flex align-items-center">
+                            <i data-feather="${extension.icon}" class="me-2"></i>
+                            <h5 class="modal-title">${extension.name}</h5>
+                        </div>
+                        <div class="pip-controls">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="minimizeExtensionApp('${pipId}')">
+                                <i data-feather="minus"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="closeExtensionApp('${pipId}')">
+                                <i data-feather="x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-body app-container">
+                        ${securitySummary}
+                        <iframe 
+                            src="${manifest.action?.default_popup || 'about:blank'}"
+                            class="extension-frame"
+                            sandbox="allow-scripts allow-same-origin"
+                            loading="lazy">
+                        </iframe>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    document.body.appendChild(pip);
-    feather.replace();
+        document.body.appendChild(pip);
+        feather.replace();
 
-    // Add drag functionality
+        // Add drag functionality
+        addDragFunctionality(pip, pipId);
+    } catch (error) {
+        console.error('Error launching extension:', error);
+        alert('Failed to launch extension. Please try again later.');
+    }
+}
+
+// Helper function for drag functionality
+function addDragFunctionality(pip, pipId) {
     const modalDialog = pip.querySelector('.modal-dialog');
     const modalHeader = pip.querySelector(`#${pipId}-header`);
     let isDragging = false;

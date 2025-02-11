@@ -9,6 +9,7 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createExtension(extension: InsertExtension): Promise<Extension>;
   createCategory(category: InsertCategory): Promise<Category>;
+  getExtensionById(id: number): Promise<Extension | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -47,6 +48,12 @@ export class DatabaseStorage implements IStorage {
       .values(category)
       .returning();
     return newCategory;
+  }
+  async getExtensionById(id: number): Promise<Extension | undefined> {
+    const [extension] = await db.select()
+      .from(extensions)
+      .where(eq(extensions.id, id));
+    return extension;
   }
 }
 
