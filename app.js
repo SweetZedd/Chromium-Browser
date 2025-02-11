@@ -84,12 +84,15 @@ function createExtensionCard(extension) {
                         <i data-feather="info"></i>
                         Details
                     </button>
+                    <button class="btn btn-outline-primary" onclick="launchExtensionApp(${JSON.stringify(extension).replace(/"/g, '&quot;')})">
+                        <i data-feather="play"></i>
+                        Run
+                    </button>
                 </div>
             </div>
         </div>
     `;
 
-    // Re-initialize Feather icons for the new content
     feather.replace();
     return col;
 }
@@ -307,3 +310,127 @@ document.getElementById('searchInput').addEventListener('keypress', (e) => {
         document.getElementById('searchButton').click();
     }
 });
+
+
+// Launch extension app in PiP mode
+function launchExtensionApp(extension) {
+    const pipId = `extension-app-${extension.id}`;
+
+    // Remove existing PiP if any
+    const existingPip = document.getElementById(pipId);
+    if (existingPip) {
+        existingPip.remove();
+    }
+
+    const pip = document.createElement('div');
+    pip.id = pipId;
+    pip.className = 'modal pip app-pip fade show';
+    pip.style.display = 'block';
+
+    pip.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="${pipId}-header">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="${extension.icon}" class="me-2"></i>
+                        <h5 class="modal-title">${extension.name}</h5>
+                    </div>
+                    <div class="pip-controls">
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="minimizeExtensionApp('${pipId}')">
+                            <i data-feather="minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="closeExtensionApp('${pipId}')">
+                            <i data-feather="x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body app-container">
+                    <iframe 
+                        src="about:blank"
+                        class="extension-frame"
+                        sandbox="allow-scripts allow-same-origin"
+                        loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(pip);
+    feather.replace();
+
+    // Add drag functionality
+    const modalDialog = pip.querySelector('.modal-dialog');
+    const modalHeader = pip.querySelector(`#${pipId}-header`);
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    modalHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    function dragStart(e) {
+        if (e.target.closest('.pip-controls')) return;
+
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+
+        if (e.target === modalHeader || modalHeader.contains(e.target)) {
+            isDragging = true;
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, modalDialog);
+        }
+    }
+
+    function dragEnd() {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    }
+
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
+}
+
+// Minimize extension app
+function minimizeExtensionApp(pipId) {
+    const pip = document.getElementById(pipId);
+    if (pip) {
+        const modalBody = pip.querySelector('.modal-body');
+        const minimizeBtn = pip.querySelector('.pip-controls .btn-outline-secondary i');
+
+        if (modalBody.style.display === 'none') {
+            modalBody.style.display = 'block';
+            minimizeBtn.setAttribute('data-feather', 'minus');
+        } else {
+            modalBody.style.display = 'none';
+            minimizeBtn.setAttribute('data-feather', 'maximize-2');
+        }
+        feather.replace();
+    }
+}
+
+// Close extension app
+function closeExtensionApp(pipId) {
+    const pip = document.getElementById(pipId);
+    if (pip) {
+        pip.remove();
+    }
+}
