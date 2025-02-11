@@ -1,54 +1,58 @@
-// Initialize Feather icons
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize Feather icons and load data
+document.addEventListener('DOMContentLoaded', async () => {
     feather.replace();
-    loadExtensions();
+    await loadExtensions();
+    await loadCategories();
 });
 
-// Sample extension data
-const extensions = [
-    {
-        id: 1,
-        name: "Privacy Guardian",
-        description: "Enhanced privacy protection and tracker blocking",
-        category: "Security",
-        icon: "shield",
-        rating: 4.5,
-        users: "100K+"
-    },
-    {
-        id: 2,
-        name: "Tab Manager Pro",
-        description: "Efficient tab organization and management",
-        category: "Productivity",
-        icon: "layers",
-        rating: 4.8,
-        users: "50K+"
-    },
-    {
-        id: 3,
-        name: "Dev Tools Plus",
-        description: "Advanced developer tools and debugging features",
-        category: "Development",
-        icon: "code",
-        rating: 4.7,
-        users: "75K+"
+// Load extensions from the database
+async function loadExtensions(category = 'All Extensions') {
+    try {
+        const grid = document.getElementById('extensionGrid');
+        grid.innerHTML = '';
+
+        let extensions;
+        if (category === 'All Extensions') {
+            const response = await fetch('/api/extensions');
+            extensions = await response.json();
+        } else {
+            const response = await fetch(`/api/categories/${category}/extensions`);
+            extensions = await response.json();
+        }
+
+        extensions.forEach(extension => {
+            const card = createExtensionCard(extension);
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading extensions:', error);
+        showError('Failed to load extensions. Please try again later.');
     }
-    // Add more sample extensions as needed
-];
+}
 
-// Load extensions into the grid
-function loadExtensions(category = 'All Extensions') {
-    const grid = document.getElementById('extensionGrid');
-    grid.innerHTML = '';
+// Load categories from the database
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        const categoryList = document.getElementById('categoryList');
 
-    const filteredExtensions = category === 'All Extensions' 
-        ? extensions 
-        : extensions.filter(ext => ext.category === category);
+        // Keep the "All Extensions" option
+        categoryList.innerHTML = `
+            <a href="#" class="list-group-item list-group-item-action active">All Extensions</a>
+        `;
 
-    filteredExtensions.forEach(extension => {
-        const card = createExtensionCard(extension);
-        grid.appendChild(card);
-    });
+        categories.forEach(category => {
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'list-group-item list-group-item-action';
+            item.textContent = category.name;
+            categoryList.appendChild(item);
+        });
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        showError('Failed to load categories. Please try again later.');
+    }
 }
 
 // Create extension card element
@@ -86,15 +90,27 @@ function createExtensionCard(extension) {
 
 // Handle extension installation
 function handleInstall(extensionId) {
-    // In a real implementation, this would handle the installation process
     alert('Please note: Direct extension installation requires proper authorization. Please visit the official Chrome Web Store to install this extension.');
+}
+
+// Show error message
+function showError(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger';
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `<i data-feather="alert-circle"></i> ${message}`;
+    document.querySelector('main').insertBefore(alertDiv, document.querySelector('.row'));
+    feather.replace();
+
+    // Remove the alert after 5 seconds
+    setTimeout(() => alertDiv.remove(), 5000);
 }
 
 // Set up category filtering
 document.getElementById('categoryList').addEventListener('click', (e) => {
     if (e.target.classList.contains('list-group-item')) {
         e.preventDefault();
-        
+
         // Update active state
         document.querySelectorAll('.list-group-item').forEach(item => {
             item.classList.remove('active');
@@ -107,20 +123,23 @@ document.getElementById('categoryList').addEventListener('click', (e) => {
 });
 
 // Set up search functionality
-document.getElementById('searchButton').addEventListener('click', () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const grid = document.getElementById('extensionGrid');
-    grid.innerHTML = '';
+document.getElementById('searchButton').addEventListener('click', async () => {
+    try {
+        const searchTerm = document.getElementById('searchInput').value;
+        const response = await fetch(`/api/extensions/search?q=${encodeURIComponent(searchTerm)}`);
+        const extensions = await response.json();
 
-    const filteredExtensions = extensions.filter(ext => 
-        ext.name.toLowerCase().includes(searchTerm) || 
-        ext.description.toLowerCase().includes(searchTerm)
-    );
+        const grid = document.getElementById('extensionGrid');
+        grid.innerHTML = '';
 
-    filteredExtensions.forEach(extension => {
-        const card = createExtensionCard(extension);
-        grid.appendChild(card);
-    });
+        extensions.forEach(extension => {
+            const card = createExtensionCard(extension);
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error searching extensions:', error);
+        showError('Failed to search extensions. Please try again later.');
+    }
 });
 
 // Handle search on enter key

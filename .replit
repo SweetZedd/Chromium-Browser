@@ -13,10 +13,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "HTTP Server"
+args = "API Server"
 
 [[workflows.workflow]]
-name = "HTTP Server"
+name = "API Server"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -27,11 +27,11 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python -m http.server 3000"
+args = "npx ts-node server/index.ts"
 waitForPort = 3000
 
 [deployment]
-run = ["sh", "-c", "python -m http.server 3000"]
+run = ["sh", "-c", "npx ts-node server/index.ts"]
 
 [[ports]]
 localPort = 3000
